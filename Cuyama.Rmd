@@ -1,0 +1,82 @@
+---
+title: "cuyama"
+author: "Madeline Gorchels"
+date: "3/9/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, output=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+```
+
+2. Loading in my data and creating a water year function
+
+```{r, output=FALSE, message=FALSE, warning=FALSE}
+w_y_cuy = read_csv("cuyamaprec.csv") %>% 
+  mutate(year = wtr_yr(year_vec, start_month = 9)) %>% 
+  filter(year != 1974)
+
+date_string = as.vector(w_y_cuy$DATE)
+
+date_string
+
+year_vec = as.Date(date_string, "%m/%d/%Y")
+
+year_vec
+
+wtr_yr <- function(year_vec, start_month=9) {
+  # Convert dates into POSIXlt
+  dates.posix = as.POSIXlt(year_vec)
+  # Year offset
+  offset = ifelse(dates.posix$mon >= start_month - 1, 1, 0)
+  # Water year
+  adj.year = dates.posix$year + 1900 + offset
+  # Return the water year
+  adj.year}
+
+```
+
+Creating a summary of the precipitation data
+
+```{r}
+w_y_cuy_dep = w_y_cuy %>% 
+  group_by(year) %>% 
+  summarise(
+    wyeartot = sum(prec)
+  ) %>% 
+  head(7)
+
+aveg_prec = mean(w_y_cuy_dep$wyeartot)
+```
+
+
+```{r}
+
+cuy_dept = w_y_cuy_dep %>% 
+  mutate(dept = wyeartot - aveg_prec) 
+#To get this into cumulative departure, I will use a for loop to create a vector with the correct answers and then bind that into the data frame.
+cuy_dept = 4.29
+  for (i in 1:7) {cuy_dept[i+1] = cuy_dept$dept[i+1]+c_dept[i]}
+cuy_dept_df = data.frame(cuy_dept)
+
+dept_cuy_df = dept_df %>% 
+  cbind(cuy_dept_df)
+
+#Now I have a data set that includes the cumnulative departure in the column called "c_dept"
+
+#Finally, I will make the line graph
+dept_plot = ggplot(dept_cuy_df, aes(x = yaer, y = cuy_dept))+
+  geom_line()+
+  theme_classic()+
+  geom_hline(yintercept = 0, linetype = "dashed")+
+  xlab("Water Year")+
+  ylab("Cumulative Departure (mm precipitation from mean)")+
+  xlim(1937, 2017)
+
+dept_plot
+```
+
